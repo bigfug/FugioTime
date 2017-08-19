@@ -12,6 +12,7 @@ using namespace fugio;
 
 TimeSync::TimeSync( QObject *pParent )
 	: QObject( pParent ), mSocket( nullptr ), mResponseSocket( nullptr ), mServerTimestamp( 0 ), mClientTimestamp( 0 ),
+	  mPlayheadStartTime( 0 ), mPlayheadStartSet( -1 ),
 	  mRTT( 0 ), mGlobalOffset( 0 ), mUniversalOffset( 0 )
 {
 //	QHostAddress	groupAddress = QHostAddress( "226.0.0.1" );
@@ -58,6 +59,23 @@ void TimeSync::setTimeServer( const QString &pString, int pPort )
 	mServerLookupPort = pPort;
 }
 
+void TimeSync::resetPlayhead()
+{
+	if( !mServerAddress.isNull() )
+	{
+		mPlayheadStartTime = universalTimestamp() + 500;
+
+		TimeDatagram	 TDG;
+
+		TDG.mServerTimestamp   = qToBigEndian<qint64>( TIME_SET_PLAYHEAD );
+		TDG.mClientTimestamp   = qToBigEndian<qint64>( mPlayheadStartTime );
+
+		if( mResponseSocket->writeDatagram( (const char *)&TDG, sizeof( TDG ), mServerAddress, mServerPort ) == sizeof( TDG ) )
+		{
+		}
+	}
+}
+
 void TimeSync::universalServerLookup( const QHostInfo &pHost )
 {
 	if( pHost.error() != QHostInfo::NoError )
@@ -72,7 +90,6 @@ void TimeSync::universalServerLookup( const QHostInfo &pHost )
 	mServerAddress = pHost.addresses().first().toString();
 	mServerPort    = mServerLookupPort;
 }
-
 
 QString TimeSync::logtime()
 {
@@ -131,8 +148,17 @@ void TimeSync::responseReady()
 
 		memcpy( &TDG, DatagramBuffer.data(), sizeof( TDG ) );
 
-		TDG.mServerTimestamp = qFromBigEndian<qint64>( TDG.mServerTimestamp );
-		TDG.mClientTimestamp = qFromBigEndian<qint64>( TDG.mClientTimestamp );
+		TDG.mServerTimestamp   = qFromBigEndian<qint64>( TDG.mServerTimestamp );
+		TDG.mClientTimestamp   = qFromBigEndian<qint64>( TDG.mClientTimestamp );
+
+		// Detect playhead start time
+
+		if( TDG.mServerTimestamp == TIME_SET_PLAYHEAD )
+		{
+			mPlayheadStartTime = TDG.mClientTimestamp;
+
+			continue;
+		}
 
 //		qDebug() << logtime() << "PONG" << DG.senderAddress() << "RS:" << TDG.mServerTimestamp << "RC:" << TDG.mClientTimestamp << "LC:" << mClientTimestamp;
 
@@ -169,12 +195,12 @@ void TimeSync::sendPing()
 
 		TimeDatagram	 TDG;
 
-		TDG.mServerTimestamp = qToBigEndian<qint64>( mServerTimestamp );
-		TDG.mClientTimestamp = qToBigEndian<qint64>( mClientTimestamp );
+		TDG.mServerTimestamp   = qToBigEndian<qint64>( mServerTimestamp );
+		TDG.mClientTimestamp   = qToBigEndian<qint64>( mClientTimestamp );
 
 		if( mResponseSocket->writeDatagram( (const char *)&TDG, sizeof( TDG ), mServerAddress, mServerPort ) == sizeof( TDG ) )
 		{
-//			mServerTimestamp = 0;
+			mPlayheadStartSet = -1;
 		}
 	}
 

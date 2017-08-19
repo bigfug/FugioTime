@@ -1,11 +1,14 @@
 #include "timeserver.h"
 
 #include <QtEndian>
+#include <QTimer>
 
 #include "timedatagram.h"
 
+#define TIME_SERVER_MESSAGES
+
 TimeServer::TimeServer( QObject *pParent )
-	: QObject( pParent )
+	: QObject( pParent ), mPlayheadStartTime( 0 )
 {
 	mUniverseTimer.start();
 
@@ -22,7 +25,15 @@ TimeServer::TimeServer( QObject *pParent )
 		 qWarning() << "Couldn't bind socket";
 	}
 
-//	qDebug() << "TimeSync Port:" << mSocket->localPort();
+#if defined( TIME_SERVER_MESSAGES )
+	qInfo() << "TimeServer:" << mSocket->localAddress() << mSocket->localPort();
+#endif
+
+	QTimer *ClientTimeoutTimer = new QTimer( this );
+
+	connect( ClientTimeoutTimer, &QTimer::timeout, this, &TimeServer::clientTimeout );
+
+	ClientTimeoutTimer->start( 60000 );
 }
 
 void TimeServer::socketError( QAbstractSocket::SocketError pError )
@@ -55,14 +66,80 @@ void TimeServer::responseReady( void )
 
 		memcpy( &TDG, DatagramBuffer.constData(), sizeof( TDG ) );
 
+		//---------------------------------------------------------------------
+		// See if we have a record of this client (add one if not)
+
+		bool		ClientFound = false;
+
+		for( ClientInfo &CI : mClientInfo )
+		{
+			if( CI.mAddress == ServerAddress && CI.mPort == ServerPort )
+			{
+				CI.mLastSeen = mUniverseTimer.elapsed();
+
+				ClientFound = true;
+
+				break;
+			}
+		}
+
+		if( !ClientFound )
+		{
+			ClientInfo		CI;
+
+			CI.mAddress  = ServerAddress;
+			CI.mPort     = ServerPort;
+			CI.mLastSeen = mUniverseTimer.elapsed();
+
+			mClientInfo << CI;
+
+#if defined( TIME_SERVER_MESSAGES )
+		qInfo() << "TimeServer: Adding client" << CI.mAddress << CI.mPort;
+#endif
+		}
+
+		//---------------------------------------------------------------------
+		// Is this a command to set the playhead?  Forward it to all other clients
+
+		qint64		DGServer = qToBigEndian<qint64>( TDG.mServerTimestamp );
+		qint64		DGClient = qToBigEndian<qint64>( TDG.mClientTimestamp );
+
+		if( DGServer == fugio::TIME_SET_PLAYHEAD )
+		{
+			if( DGClient != mPlayheadStartTime )
+			{
+#if defined( TIME_SERVER_MESSAGES )
+				qInfo() << "TimeServer: Setting playhead start time:" << DGClient;
+#endif
+
+				mPlayheadStartTime = DGClient;
+
+				for( ClientInfo &CI : mClientInfo )
+				{
+					if( ServerAddress == CI.mAddress && ServerPort == CI.mPort )
+					{
+						continue;
+					}
+
+					if( mSocket->writeDatagram( (const char *)&TDG, sizeof( TDG ), CI.mAddress, CI.mPort ) != sizeof( fugio::TimeDatagram ) )
+					{
+
+					}
+				}
+			}
+
+			continue;
+		}
+
+		//---------------------------------------------------------------------
+		// A normal timeserver ping - send the packet back to the client
+
 		qint64		ServerTimestamp = mUniverseTimer.elapsed();
-		qint64		RTT             = ServerTimestamp - qFromBigEndian<qint64>( TDG.mServerTimestamp );
+		qint64		RTT             = ServerTimestamp - DGServer;
 
 //		qDebug() << logtime() << "Received PING from" << DG.senderAddress().toString() << "RC:" << qFromBigEndian<qint64>( TDG.mClientTimestamp ) << "ST:" << ServerTimestamp;
 
 		// Send the response packet
-
-		TDG.mServerTimestamp = qToBigEndian<qint64>( ServerTimestamp );
 
 //		qDebug() << logtime() << "PONG" << DG.senderAddress() << DG.senderPort();
 
@@ -72,5 +149,24 @@ void TimeServer::responseReady( void )
 		}
 
 		emit clientResponse( ServerAddress, ServerPort, ServerTimestamp, RTT );
+	}
+}
+
+void TimeServer::clientTimeout()
+{
+	for( int i = mClientInfo.size() - 1 ; i >= 0 ; i-- )
+	{
+		const ClientInfo &CI = mClientInfo[ i ];
+
+		if( mUniverseTimer.elapsed() - CI.mLastSeen < 120 * 1000 )
+		{
+			continue;
+		}
+
+#if defined( TIME_SERVER_MESSAGES )
+		qInfo() << "TimeServer: Removing client" << CI.mAddress << CI.mPort;
+#endif
+
+		mClientInfo.removeLast();
 	}
 }

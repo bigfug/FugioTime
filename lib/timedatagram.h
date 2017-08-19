@@ -4,6 +4,8 @@
 namespace fugio
 {
 
+static const qint64		TIME_SET_PLAYHEAD = -1;
+
 typedef struct TimeDatagram
 {
 	qint64		mServerTimestamp;

@@ -31,9 +31,21 @@ private slots:
 
 	void responseReady( void );
 
+	void clientTimeout( void );
+
 private:
 	QUdpSocket				*mSocket;
 	QElapsedTimer			 mUniverseTimer;
+	qint64					 mPlayheadStartTime;
+
+	typedef struct ClientInfo
+	{
+		QHostAddress		mAddress;
+		quint16				mPort;
+		qint64				mLastSeen;
+	} ClientInfo;
+
+	QList<ClientInfo>		 mClientInfo;
 };
 
 #endif // TIMESERVER_H

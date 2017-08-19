@@ -36,6 +36,11 @@ public:
 		return( ( pTimeStamp - mGlobalOffset ) + mUniversalOffset );
 	}
 
+	qint64 playhead( void ) const
+	{
+		return( mPlayheadStartTime > 0 ? universalTimestamp() - mPlayheadStartTime : 0 );
+	}
+
 public slots:
 	void updateUniversalTimestamp( qint64 pTimeStamp )
 	{
@@ -47,6 +52,8 @@ public slots:
 	}
 
 	void setTimeServer( const QString &pServer, int pPort = 45456 );
+
+	void resetPlayhead( void );
 
 private:
 	static QString logtime( void );
@@ -65,6 +72,8 @@ private:
 	QUdpSocket		*mResponseSocket;
 	qint64			 mServerTimestamp;
 	qint64			 mClientTimestamp;
+	qint64			 mPlayheadStartTime;
+	qint64			 mPlayheadStartSet;
 	qint64			 mRTT;
 	QVector<qint64>	 mRTTArray;
 	QVector<qint64>	 mRTTSortedArray;
