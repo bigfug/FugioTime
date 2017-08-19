@@ -13,6 +13,13 @@ int main( int argc, char *argv[] )
 	QCoreApplication::setApplicationName( "fugiotimeserver" );
 	QCoreApplication::setApplicationVersion( "1.0.0" );
 
+	QCommandLineParser		Parser;
+
+	Parser.addHelpOption();
+	Parser.addVersionOption();
+
+	Parser.process( a );
+
 	TimeServer				 *TS = new TimeServer( &a );
 	TimeCast				 *TC = new TimeCast();
 
