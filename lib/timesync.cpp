@@ -1,15 +1,16 @@
 #include "timesync.h"
 
 #include <QtEndian>
+#include <QUdpSocket>
 #include <QDateTime>
 #include <QTimer>
+#include <QHostInfo>
 
-#include "fugio.h"
-
-#include "globalprivate.h"
+using namespace fugio;
 
 TimeSync::TimeSync( QObject *pParent )
-	: QObject( pParent ), mSocket( nullptr ), mResponseSocket( nullptr ), mServerTimestamp( 0 ), mClientTimestamp( 0 ), mRTT( 0 )
+	: QObject( pParent ), mSocket( nullptr ), mResponseSocket( nullptr ), mServerTimestamp( 0 ), mClientTimestamp( 0 ),
+	  mRTT( 0 ), mGlobalOffset( 0 ), mUniversalOffset( 0 )
 {
 //	QHostAddress	groupAddress = QHostAddress( "226.0.0.1" );
 
@@ -39,8 +40,37 @@ TimeSync::TimeSync( QObject *pParent )
 
 //	qDebug() << logtime() << "TimeSync port:" << mResponseSocket->localPort();
 
+	mGlobalTimer.start();
+
+	qDebug() << "Global Timer Monotonic:" << mGlobalTimer.isMonotonic();
+
+	updateUniversalTimestamp( 0 );
+
 	QTimer::singleShot( 1000, this, SLOT(sendPing()) );
 }
+
+void TimeSync::setTimeServer( const QString &pString, int pPort )
+{
+	QHostInfo::lookupHost( pString, this, SLOT(universalServerLookup(QHostInfo)) );
+
+	mServerLookupPort = pPort;
+}
+
+void TimeSync::universalServerLookup( const QHostInfo &pHost )
+{
+	if( pHost.error() != QHostInfo::NoError )
+	{
+		qWarning() << "Time server lookup failed:" << pHost.errorString();
+
+		return;
+	}
+
+	qInfo() << "Time server address:" << pHost.hostName() << pHost.addresses().first().toString();
+
+	mServerAddress = pHost.addresses().first().toString();
+	mServerPort    = mServerLookupPort;
+}
+
 
 QString TimeSync::logtime()
 {
@@ -78,8 +108,6 @@ void TimeSync::processPendingDatagrams()
 
 void TimeSync::responseReady()
 {
-	GlobalPrivate	*GP = qobject_cast<GlobalPrivate *>( fugio::fugio()->qobject() );
-
 	TimeDatagram	 TDG;
 	QByteArray		 DatagramBuffer;
 
@@ -108,7 +136,7 @@ void TimeSync::responseReady()
 
 		if( TDG.mClientTimestamp == mClientTimestamp )
 		{
-			mRTT = GP->timestamp() - TDG.mClientTimestamp;
+			mRTT = timestamp() - TDG.mClientTimestamp;
 
 			if( mRTTArray.size() >= 7 )
 			{
@@ -121,7 +149,7 @@ void TimeSync::responseReady()
 
 			std::sort( mRTTSortedArray.begin(), mRTTSortedArray.end() );
 
-			GP->updateUniversalTimestamp( TDG.mServerTimestamp + ( mRTT / 2 ) ); //( qMax( mRTT, mRTTArray[ mRTTArray.size() / 2 ] ) / 2 ) );
+			updateUniversalTimestamp( TDG.mServerTimestamp + ( mRTT / 2 ) ); //( qMax( mRTT, mRTTArray[ mRTTArray.size() / 2 ] ) / 2 ) );
 
 //			qDebug() << logtime() << "RTT:" << mRTT << mRTTSortedArray << GP->universalTimestamp();
 		}
@@ -130,12 +158,10 @@ void TimeSync::responseReady()
 
 void TimeSync::sendPing()
 {
-	GlobalPrivate	*GP = qobject_cast<GlobalPrivate *>( fugio::fugio()->qobject() );
-
 	if( !mServerAddress.isNull() )
 	{
-		mClientTimestamp = GP->timestamp();
-		mServerTimestamp = GP->universalTimestamp();
+		mClientTimestamp = timestamp();
+		mServerTimestamp = universalTimestamp();
 
 //		qDebug() << logtime() << "Sending PING to" << mServerAddress << mServerPort << "T:" << 0 << "LC:" << mClientTimestamp;
 
@@ -151,10 +177,4 @@ void TimeSync::sendPing()
 	}
 
 	QTimer::singleShot( qMax( 2500LL, 5000LL - ( QDateTime::currentMSecsSinceEpoch() % 5000LL ) ), this, SLOT(sendPing()) );
-}
-
-void TimeSync::setServer( const QString &pServer, int pPort )
-{
-	mServerAddress = pServer;
-	mServerPort    = pPort;
 }

@@ -1,8 +1,13 @@
 #ifndef TIMESYNC_H
 #define TIMESYNC_H
 
-#include <QUdpSocket>
 #include <QElapsedTimer>
+#include <QHostAddress>
+
+class QHostInfo;
+class QUdpSocket;
+
+namespace fugio {
 
 typedef struct TimeDatagram
 {
@@ -17,6 +22,38 @@ class TimeSync : public QObject
 public:
 	TimeSync( QObject *pParent = nullptr );
 
+	inline qint64 timestamp( void ) const
+	{
+		return( mGlobalTimer.elapsed() );
+	}
+
+	qint64 universalTimestamp( void ) const
+	{
+		return( mUniversalTimer.elapsed() + mUniversalOffset );
+	}
+
+	qint64 universalToGlobal( qint64 pTimeStamp ) const
+	{
+		return( ( pTimeStamp - mUniversalOffset ) + mGlobalOffset );
+	}
+
+	qint64 globalToUniversal( qint64 pTimeStamp ) const
+	{
+		return( ( pTimeStamp - mGlobalOffset ) + mUniversalOffset );
+	}
+
+public slots:
+	void updateUniversalTimestamp( qint64 pTimeStamp )
+	{
+		mUniversalTimer.restart();
+
+		mUniversalOffset = pTimeStamp;
+
+		mGlobalOffset = mGlobalTimer.elapsed();
+	}
+
+	void setTimeServer( const QString &pServer, int pPort = 45456 );
+
 private:
 	static QString logtime( void );
 
@@ -27,8 +64,7 @@ private slots:
 
 	void sendPing( void );
 
-public slots:
-	void setServer( const QString &pServer, int pPort = 45456 );
+	void universalServerLookup( const QHostInfo &pHost );
 
 private:
 	QUdpSocket		*mSocket;
@@ -40,6 +76,14 @@ private:
 	QVector<qint64>	 mRTTSortedArray;
 	QHostAddress	 mServerAddress;
 	quint16			 mServerPort;
+	int				 mServerLookupPort;
+
+	QElapsedTimer					 mGlobalTimer;
+	qint64							 mGlobalOffset;		// convert from universal to global
+	QElapsedTimer					 mUniversalTimer;
+	qint64							 mUniversalOffset;
 };
+
+} // namespace fugio
 
 #endif // TIMESYNC_H
