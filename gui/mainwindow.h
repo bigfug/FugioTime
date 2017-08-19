@@ -11,8 +11,8 @@
 #include <QHostInfo>
 #include <QLabel>
 
-#include "timecast.h"
-#include "timeserver.h"
+#include "../lib/timecast.h"
+#include "../lib/timeserver.h"
 
 namespace Ui {
 class MainWindow;

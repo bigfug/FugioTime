@@ -3,8 +3,6 @@
 #include <QTimer>
 #include <QDateTime>
 
-#include <fugio/global_interface.h>
-
 ClientConsole::ClientConsole(QObject *parent)
 	: QObject(parent)
 {

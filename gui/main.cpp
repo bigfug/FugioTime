@@ -3,9 +3,8 @@
 #include <QCommandLineParser>
 #include <QScopedPointer>
 
-#include "clientconsole.h"
-
-#include <fugio/global_interface.h>
+//#include "../console/clientconsole.h"
+#include "../lib/timesync.h"
 
 int main( int argc, char *argv[] )
 {
@@ -52,14 +51,14 @@ int main( int argc, char *argv[] )
 		return( a->exec() );
 	}
 
-	ClientConsole	c;
+//	ClientConsole	c;
 
-	if( Parser.isSet( OptionServer ) )
-	{
-		fugio::GlobalInterface	*Global = fugio::fugio();
+//	if( Parser.isSet( OptionServer ) )
+//	{
+//		fugio::TimeSync		*Client = new fugio::TimeSync();
 
-		Global->setUniversalTimeServer( Parser.value( OptionServer ), 45456 );
-	}
+//		Client->setTimeServer( Parser.value( OptionServer ), 45456 );
+//	}
 
 	return( a->exec() );
 }
