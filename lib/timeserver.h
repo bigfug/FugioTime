@@ -10,12 +10,6 @@ class TimeServer : public QObject
 {
 	Q_OBJECT
 
-	typedef struct TimeDatagram
-	{
-		qint64		mServerTimestamp;
-		qint64		mClientTimestamp;
-	} TimeDatagram;
-
 	static QString logtime( void )
 	{
 		return( QDateTime::currentDateTimeUtc().toString( "HH:mm:ss.zzz" ) );

@@ -2,6 +2,8 @@
 
 #include <QtEndian>
 
+#include "timedatagram.h"
+
 TimeServer::TimeServer( QObject *pParent )
 	: QObject( pParent )
 {
@@ -30,10 +32,10 @@ void TimeServer::socketError( QAbstractSocket::SocketError pError )
 
 void TimeServer::responseReady( void )
 {
-	TimeDatagram	TDG;
-	QByteArray		DatagramBuffer;
-	QHostAddress	ServerAddress;
-	quint16			ServerPort;
+	fugio::TimeDatagram		TDG;
+	QByteArray				DatagramBuffer;
+	QHostAddress			ServerAddress;
+	quint16					ServerPort;
 
 	while( mSocket->hasPendingDatagrams() )
 	{
@@ -64,7 +66,7 @@ void TimeServer::responseReady( void )
 
 //		qDebug() << logtime() << "PONG" << DG.senderAddress() << DG.senderPort();
 
-		if( mSocket->writeDatagram( (const char *)&TDG, sizeof( TDG ), ServerAddress, ServerPort ) != sizeof( TimeDatagram ) )
+		if( mSocket->writeDatagram( (const char *)&TDG, sizeof( TDG ), ServerAddress, ServerPort ) != sizeof( fugio::TimeDatagram ) )
 		{
 			qWarning() << logtime() << "Couldn't write packet";
 		}

@@ -6,6 +6,8 @@
 #include <QTimer>
 #include <QHostInfo>
 
+#include "timedatagram.h"
+
 using namespace fugio;
 
 TimeSync::TimeSync( QObject *pParent )
@@ -79,9 +81,9 @@ QString TimeSync::logtime()
 
 void TimeSync::processPendingDatagrams()
 {
-	TimeDatagram	 TDG;
-	QByteArray		 DatagramBuffer;
-	QHostAddress	 ServerAddress;
+	fugio::TimeDatagram	 TDG;
+	QByteArray			 DatagramBuffer;
+	QHostAddress		 ServerAddress;
 
 	while( mSocket->hasPendingDatagrams() )
 	{

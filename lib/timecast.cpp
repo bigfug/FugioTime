@@ -5,14 +5,17 @@
 #include <QtEndian>
 #include <QNetworkInterface>
 
-TimeCast::TimeCast( void )
+#include "timedatagram.h"
+
+TimeCast::TimeCast( QObject *pParent )
+	: QObject( pParent )
 {
 	QTimer::singleShot( 100, this, SLOT(updateCasters()) );
 }
 
 void TimeCast::sendTime( qint64 pTimeStamp )
 {
-	TimeDatagram		TDG;
+	fugio::TimeDatagram		TDG;
 
 	TDG.mServerTimestamp = qToBigEndian<qint64>( pTimeStamp );
 	TDG.mClientTimestamp = 0;

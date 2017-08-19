@@ -11,19 +11,13 @@ class TimeCast : public QObject
 {
 	Q_OBJECT
 
-	typedef struct TimeDatagram
-	{
-		qint64		mServerTimestamp;
-		qint64		mClientTimestamp;
-	} TimeDatagram;
-
 	static QString logtime( void )
 	{
 		return( QDateTime::currentDateTimeUtc().toString( "HH:mm:ss.zzz" ) );
 	}
 
 public:
-	TimeCast( void );
+	TimeCast( QObject *pParent = Q_NULLPTR );
 
 public slots:
 	void sendTime( qint64 pTimeStamp );

@@ -9,12 +9,6 @@ class QUdpSocket;
 
 namespace fugio {
 
-typedef struct TimeDatagram
-{
-	qint64		mServerTimestamp;
-	qint64		mClientTimestamp;
-} TimeDatagram;
-
 class TimeSync : public QObject
 {
 	Q_OBJECT
