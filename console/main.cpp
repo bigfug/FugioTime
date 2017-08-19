@@ -23,5 +23,7 @@ int main( int argc, char *argv[] )
 		TC->sendTime( TS->timestamp() );
 	} );
 
+	CastTimer.start( 1000 );
+
 	return( a.exec() );
 }
