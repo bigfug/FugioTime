@@ -22,11 +22,11 @@ TimeServer::TimeServer( QObject *pParent )
 	}
 	else
 	{
-		 qWarning() << "Couldn't bind socket";
+		 qWarning() << logtime() << "Couldn't bind socket";
 	}
 
 #if defined( TIME_SERVER_MESSAGES )
-	qInfo() << "TimeServer:" << mSocket->localAddress() << mSocket->localPort();
+	qInfo() << logtime() << "TimeServer:" << mSocket->localAddress() << mSocket->localPort();
 #endif
 
 	QTimer *ClientTimeoutTimer = new QTimer( this );
@@ -94,7 +94,7 @@ void TimeServer::responseReady( void )
 			mClientInfo << CI;
 
 #if defined( TIME_SERVER_MESSAGES )
-		qInfo() << "TimeServer: Adding client" << CI.mAddress << CI.mPort;
+		qInfo() << logtime() << "TimeServer: Adding client" << CI.mAddress << CI.mPort;
 #endif
 		}
 
@@ -109,7 +109,7 @@ void TimeServer::responseReady( void )
 			if( DGClient != mPlayheadStartTime )
 			{
 #if defined( TIME_SERVER_MESSAGES )
-				qInfo() << "TimeServer: Setting playhead start time:" << DGClient;
+				qInfo() << logtime() << "TimeServer: Setting playhead start time:" << DGClient;
 #endif
 
 				mPlayheadStartTime = DGClient;
@@ -164,7 +164,7 @@ void TimeServer::clientTimeout()
 		}
 
 #if defined( TIME_SERVER_MESSAGES )
-		qInfo() << "TimeServer: Removing client" << CI.mAddress << CI.mPort;
+		qInfo() << logtime() << "TimeServer: Removing client" << CI.mAddress << CI.mPort;
 #endif
 
 		mClientInfo.removeLast();
