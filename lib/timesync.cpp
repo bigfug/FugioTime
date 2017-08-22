@@ -6,10 +6,6 @@
 #include <QTimer>
 #include <QHostInfo>
 
-#if QT_VERSION >= QT_VERSION_CHECK( 5, 8, 0 )
-#include <QNetworkDatagram>
-#endif
-
 #include "timedatagram.h"
 
 using namespace fugio;
@@ -103,36 +99,12 @@ QString TimeSync::logtime()
 void TimeSync::processPendingDatagrams()
 {
 	fugio::TimeDatagram	 TDG;
-
-#if QT_VERSION >= QT_VERSION_CHECK( 5, 8, 0 )
-	QNetworkDatagram	 Datagram;
-
-	while( mSocket->hasPendingDatagrams() )
-	{
-		Datagram = mSocket->receiveDatagram();
-
-		if( !Datagram.isValid() )
-		{
-			break;
-		}
-
-		if( Datagram.data().size() != sizeof( TDG ) )
-		{
-			continue;
-		}
-
-		memcpy( &TDG, Datagram.data(), sizeof( TDG ) );
-
-		mServerAddress = Datagram.senderAddress();
-		mServerPort    = 45456;
-	}
-#else
 	QByteArray			 DatagramBuffer;
 	QHostAddress		 ServerAddress;
 
 	while( mSocket->hasPendingDatagrams() )
 	{
-		int		DatagramSize = mResponseSocket->pendingDatagramSize();
+		int		DatagramSize = mSocket->pendingDatagramSize();
 
 		if( DatagramSize <= 0 )
 		{
@@ -141,12 +113,12 @@ void TimeSync::processPendingDatagrams()
 
 		DatagramBuffer.resize( DatagramSize );
 
-		if( DatagramBuffer.size() != mResponseSocket->pendingDatagramSize() )
+		if( DatagramBuffer.size() != mSocket->pendingDatagramSize() )
 		{
 			break;
 		}
 
-		mResponseSocket->readDatagram( DatagramBuffer.data(), DatagramBuffer.size(), &ServerAddress );
+		mSocket->readDatagram( DatagramBuffer.data(), DatagramBuffer.size(), &ServerAddress );
 
 		if( DatagramBuffer.size() != sizeof( TDG ) )
 		{
@@ -158,7 +130,6 @@ void TimeSync::processPendingDatagrams()
 		mServerAddress = ServerAddress;
 		mServerPort    = 45456;
 	}
-#endif
 }
 
 void TimeSync::responseReady()
