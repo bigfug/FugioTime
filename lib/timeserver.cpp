@@ -143,6 +143,8 @@ void TimeServer::responseReady( void )
 
 //		qDebug() << logtime() << "PONG" << DG.senderAddress() << DG.senderPort();
 
+		TDG.mServerTimestamp = qToBigEndian( ServerTimestamp );
+
 		if( mSocket->writeDatagram( (const char *)&TDG, sizeof( TDG ), ServerAddress, ServerPort ) != sizeof( fugio::TimeDatagram ) )
 		{
 			qWarning() << logtime() << "Couldn't write packet";
