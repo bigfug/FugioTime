@@ -6,6 +6,10 @@
 #include <QTimer>
 #include <QHostInfo>
 
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 8, 0 )
+#include <QNetworkDatagram>
+#endif
+
 #include "timedatagram.h"
 
 using namespace fugio;
@@ -19,7 +23,7 @@ TimeSync::TimeSync( QObject *pParent )
 
 	mSocket = new QUdpSocket( this );
 
-	if( mSocket->bind( QHostAddress::AnyIPv4, 45454, QUdpSocket::ShareAddress ) )
+	if( mSocket->bind( 45454, QUdpSocket::ShareAddress ) )
 	{
 //		mSocket->joinMulticastGroup( groupAddress );
 
@@ -99,12 +103,43 @@ QString TimeSync::logtime()
 void TimeSync::processPendingDatagrams()
 {
 	fugio::TimeDatagram	 TDG;
+
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 8, 0 )
+	QNetworkDatagram	 Datagram;
+
+	while( mSocket->hasPendingDatagrams() )
+	{
+		Datagram = mSocket->receiveDatagram();
+
+		if( !Datagram.isValid() )
+		{
+			break;
+		}
+
+		if( Datagram.data().size() != sizeof( TDG ) )
+		{
+			continue;
+		}
+
+		memcpy( &TDG, Datagram.data(), sizeof( TDG ) );
+
+		mServerAddress = Datagram.senderAddress();
+		mServerPort    = 45456;
+	}
+#else
 	QByteArray			 DatagramBuffer;
 	QHostAddress		 ServerAddress;
 
 	while( mSocket->hasPendingDatagrams() )
 	{
-		DatagramBuffer.resize( mResponseSocket->pendingDatagramSize() );
+		int		DatagramSize = mResponseSocket->pendingDatagramSize();
+
+		if( DatagramSize <= 0 )
+		{
+			break;
+		}
+
+		DatagramBuffer.resize( DatagramSize );
 
 		if( DatagramBuffer.size() != mResponseSocket->pendingDatagramSize() )
 		{
@@ -123,6 +158,7 @@ void TimeSync::processPendingDatagrams()
 		mServerAddress = ServerAddress;
 		mServerPort    = 45456;
 	}
+#endif
 }
 
 void TimeSync::responseReady()
@@ -179,7 +215,7 @@ void TimeSync::responseReady()
 
 			updateUniversalTimestamp( TDG.mServerTimestamp + ( mRTT / 2 ) ); //( qMax( mRTT, mRTTArray[ mRTTArray.size() / 2 ] ) / 2 ) );
 
-//			qDebug() << logtime() << "RTT:" << mRTT << mRTTSortedArray << GP->universalTimestamp();
+			//qDebug() << logtime() << "RTT:" << mRTT << mRTTSortedArray << TDG.mServerTimestamp + ( mRTT / 2 ) << universalTimestamp();
 		}
 	}
 }
