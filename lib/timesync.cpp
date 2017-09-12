@@ -87,7 +87,7 @@ void TimeSync::universalServerLookup( const QHostInfo &pHost )
 
 	qInfo() << "Time server address:" << pHost.hostName() << pHost.addresses().first().toString();
 
-	mServerAddress = pHost.addresses().first().toString();
+	mServerAddress = QHostAddress( pHost.addresses().first().toString() );
 	mServerPort    = mServerLookupPort;
 }
 
