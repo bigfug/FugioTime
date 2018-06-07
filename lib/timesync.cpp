@@ -173,7 +173,7 @@ void TimeSync::responseReady()
 		{
 			mRTT = timestamp() - TDG.mClientTimestamp;
 
-			if( mRTTArray.size() >= 7 )
+			if( mRTTArray.size() >= 25 )
 			{
 				mRTTArray.removeFirst();
 			}
