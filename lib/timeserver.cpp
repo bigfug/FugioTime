@@ -164,7 +164,7 @@ void TimeServer::clientTimeout()
 	{
 		const ClientInfo &CI = mClientInfo[ i ];
 
-		if( timestamp() - CI.mLastSeen < 120 * 1000 )
+		if( TimeStamp - CI.mLastSeen < 120 * 1000 )
 		{
 			continue;
 		}
