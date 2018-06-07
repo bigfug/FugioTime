@@ -47,7 +47,7 @@ TimeSync::TimeSync( QObject *pParent )
 
 	qDebug() << "Global Timer Monotonic:" << mGlobalTimer.isMonotonic();
 
-	updateUniversalTimestamp( 0 );
+	updateUniversalTimestamp( QDateTime::currentMSecsSinceEpoch() );
 
 	QTimer::singleShot( 1000, this, SLOT(sendPing()) );
 }

@@ -20,7 +20,7 @@ public:
 
 	inline qint64 timestamp( void ) const
 	{
-		return( mUniverseTimer.elapsed() );
+		return( mUniverseStartTime + mUniverseTimer.elapsed() );
 	}
 
 signals:
@@ -36,6 +36,7 @@ private slots:
 private:
 	QUdpSocket				*mSocket;
 	QElapsedTimer			 mUniverseTimer;
+	qint64					 mUniverseStartTime;
 	qint64					 mPlayheadStartTime;
 
 	typedef struct ClientInfo

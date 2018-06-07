@@ -10,6 +10,8 @@
 TimeServer::TimeServer( QObject *pParent )
 	: QObject( pParent ), mPlayheadStartTime( 0 )
 {
+	mUniverseStartTime = QDateTime::currentMSecsSinceEpoch();
+
 	mUniverseTimer.start();
 
 	mSocket = new QUdpSocket( this );
@@ -75,7 +77,7 @@ void TimeServer::responseReady( void )
 		{
 			if( CI.mAddress == ServerAddress && CI.mPort == ServerPort )
 			{
-				CI.mLastSeen = mUniverseTimer.elapsed();
+				CI.mLastSeen = timestamp();
 
 				ClientFound = true;
 
@@ -89,7 +91,7 @@ void TimeServer::responseReady( void )
 
 			CI.mAddress  = ServerAddress;
 			CI.mPort     = ServerPort;
-			CI.mLastSeen = mUniverseTimer.elapsed();
+			CI.mLastSeen = timestamp();
 
 			mClientInfo << CI;
 
@@ -134,7 +136,7 @@ void TimeServer::responseReady( void )
 		//---------------------------------------------------------------------
 		// A normal timeserver ping - send the packet back to the client
 
-		qint64		ServerTimestamp = mUniverseTimer.elapsed();
+		qint64		ServerTimestamp = timestamp();
 		qint64		RTT             = ServerTimestamp - DGServer;
 
 //		qDebug() << logtime() << "Received PING from" << DG.senderAddress().toString() << "RC:" << qFromBigEndian<qint64>( TDG.mClientTimestamp ) << "ST:" << ServerTimestamp;
@@ -156,11 +158,13 @@ void TimeServer::responseReady( void )
 
 void TimeServer::clientTimeout()
 {
+	qint64		TimeStamp = timestamp();
+
 	for( int i = mClientInfo.size() - 1 ; i >= 0 ; i-- )
 	{
 		const ClientInfo &CI = mClientInfo[ i ];
 
-		if( mUniverseTimer.elapsed() - CI.mLastSeen < 120 * 1000 )
+		if( timestamp() - CI.mLastSeen < 120 * 1000 )
 		{
 			continue;
 		}
