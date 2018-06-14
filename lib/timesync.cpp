@@ -180,11 +180,18 @@ void TimeSync::responseReady()
 
 			if( abs( TargetTimeStamp - CurrentTimeStamp ) >= 2000 )
 			{
+				qInfo() << "RESET" << CurrentTimeStamp << TargetTimeStamp << CurrentTimeStamp - TargetTimeStamp;
+
 				updateUniversalTimestamp( TargetTimeStamp );
 			}
 			else
 			{
-				updateUniversalTimestamp( CurrentTimeStamp + ( ( CurrentTimeStamp - TargetTimeStamp ) / 10 ) );
+				qint64		DiffTime   = TargetTimeStamp - CurrentTimeStamp;
+				qint64		AdjustTime = CurrentTimeStamp + ( DiffTime / 2 );
+
+				qInfo() << "ADJUST" << CurrentTimeStamp << TargetTimeStamp << DiffTime << AdjustTime;
+
+				updateUniversalTimestamp( AdjustTime );
 			}
 		}
 	}
