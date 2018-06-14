@@ -75,8 +75,6 @@ private:
 	qint64			 mPlayheadStartTime;
 	qint64			 mPlayheadStartSet;
 	qint64			 mRTT;
-	QVector<qint64>	 mRTTArray;
-	QVector<qint64>	 mRTTSortedArray;
 	QHostAddress	 mServerAddress;
 	quint16			 mServerPort;
 	int				 mServerLookupPort;

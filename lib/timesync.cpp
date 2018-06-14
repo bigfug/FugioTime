@@ -169,26 +169,23 @@ void TimeSync::responseReady()
 			continue;
 		}
 
-		qInfo() << logtime() << "PONG" << HostAddr << "RS:" << TDG.mServerTimestamp << "RC:" << TDG.mClientTimestamp << "LC:" << mClientTimestamp;
+		//qInfo() << logtime() << "PONG" << HostAddr << "RS:" << TDG.mServerTimestamp << "RC:" << TDG.mClientTimestamp << "LC:" << mClientTimestamp;
 
 		if( TDG.mClientTimestamp == mClientTimestamp )
 		{
 			mRTT = timestamp() - TDG.mClientTimestamp;
 
-			if( mRTTArray.size() >= 25 )
+			qint64	CurrentTimeStamp = universalTimestamp();
+			qint64	TargetTimeStamp  = TDG.mServerTimestamp + ( mRTT / 2 );
+
+			if( abs( TargetTimeStamp - CurrentTimeStamp ) >= 2000 )
 			{
-				mRTTArray.removeFirst();
+				updateUniversalTimestamp( TargetTimeStamp );
 			}
-
-			mRTTArray << mRTT;
-
-			mRTTSortedArray = mRTTArray;
-
-			std::sort( mRTTSortedArray.begin(), mRTTSortedArray.end() );
-
-			updateUniversalTimestamp( TDG.mServerTimestamp + ( mRTT / 2 ) ); //( qMax( mRTT, mRTTArray[ mRTTArray.size() / 2 ] ) / 2 ) );
-
-			qInfo() << logtime() << "RTT:" << mRTT << mRTTSortedArray << TDG.mServerTimestamp + ( mRTT / 2 ) << universalTimestamp();
+			else
+			{
+				updateUniversalTimestamp( CurrentTimeStamp + ( ( CurrentTimeStamp - TargetTimeStamp ) / 10 ) );
+			}
 		}
 	}
 }
