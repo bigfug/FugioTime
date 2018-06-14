@@ -146,7 +146,9 @@ void TimeSync::responseReady()
 			break;
 		}
 
-		mResponseSocket->readDatagram( DatagramBuffer.data(), DatagramBuffer.size() );
+		QHostAddress		HostAddr;
+
+		mResponseSocket->readDatagram( DatagramBuffer.data(), DatagramBuffer.size(), &HostAddr );
 
 		if( DatagramBuffer.size() != sizeof( TDG ) )
 		{
@@ -167,7 +169,7 @@ void TimeSync::responseReady()
 			continue;
 		}
 
-//		qDebug() << logtime() << "PONG" << DG.senderAddress() << "RS:" << TDG.mServerTimestamp << "RC:" << TDG.mClientTimestamp << "LC:" << mClientTimestamp;
+		qInfo() << logtime() << "PONG" << HostAddr << "RS:" << TDG.mServerTimestamp << "RC:" << TDG.mClientTimestamp << "LC:" << mClientTimestamp;
 
 		if( TDG.mClientTimestamp == mClientTimestamp )
 		{
@@ -186,7 +188,7 @@ void TimeSync::responseReady()
 
 			updateUniversalTimestamp( TDG.mServerTimestamp + ( mRTT / 2 ) ); //( qMax( mRTT, mRTTArray[ mRTTArray.size() / 2 ] ) / 2 ) );
 
-			//qDebug() << logtime() << "RTT:" << mRTT << mRTTSortedArray << TDG.mServerTimestamp + ( mRTT / 2 ) << universalTimestamp();
+			qInfo() << logtime() << "RTT:" << mRTT << mRTTSortedArray << TDG.mServerTimestamp + ( mRTT / 2 ) << universalTimestamp();
 		}
 	}
 }
