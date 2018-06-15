@@ -88,6 +88,8 @@ private:
 	int				 mServerLookupPort;
 	bool			 mLockedOn;
 
+	QVector<qint64>	 mDiffs;
+
 	std::chrono::high_resolution_clock::time_point			 mGlobalTimer;
 	qint64													 mGlobalOffset;		// convert from universal to global
 	std::chrono::high_resolution_clock::time_point			 mUniversalTimer;

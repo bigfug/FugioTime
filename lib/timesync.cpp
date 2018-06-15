@@ -178,30 +178,45 @@ void TimeSync::responseReady()
 			qint64	CurrentTimeStamp = universalTimestamp();
 			qint64	TargetTimeStamp  = TDG.mServerTimestamp + ( mRTT / 2 );
 
-			if( abs( TargetTimeStamp - CurrentTimeStamp ) < 10 )
+			qint64	TotalDiffTime = TargetTimeStamp - CurrentTimeStamp;
+
+			mDiffs << TotalDiffTime;
+
+			while( mDiffs.size() > 9 )
+			{
+				mDiffs.removeFirst();
+			}
+
+			QVector<qint64>		SortedDiffs = mDiffs;
+
+			std::sort( SortedDiffs.begin(), SortedDiffs.end() );
+
+			qint64	MidDif = SortedDiffs.at( SortedDiffs.size() / 2 );
+
+			if( abs( MidDif ) < 10 )
 			{
 				mLockedOn = true;
+			}
+			else if( abs( MidDif ) > 500 )
+			{
+				mLockedOn = false;
 			}
 
 			if( !mLockedOn )
 			{
-				qInfo() << "RESET" << CurrentTimeStamp << TargetTimeStamp << CurrentTimeStamp - TargetTimeStamp;
+				qInfo() << "RESET" << CurrentTimeStamp << TargetTimeStamp << TotalDiffTime;
 
 				updateUniversalTimestamp( TargetTimeStamp );
 			}
+			else if( abs( TotalDiffTime ) < 3 )
+			{
+				qInfo() << "ADJUST" << TotalDiffTime;
+
+				updateUniversalTimestamp( CurrentTimeStamp + TotalDiffTime );
+			}
 			else
 			{
-				qint64		TotalDiffTime = TargetTimeStamp - CurrentTimeStamp;
-				qint64		DiffTime;
-
-				DiffTime = std::min<qint64>( TotalDiffTime,  15 );
-				DiffTime = std::max<qint64>( DiffTime,      -15 );
-
-				qint64		AdjustTime = CurrentTimeStamp + ( DiffTime / 3 );
-
-				qInfo() << "ADJUST" << DiffTime << TotalDiffTime;
-
-				updateUniversalTimestamp( AdjustTime );
+				qInfo() << "IGNORE" << TotalDiffTime;
 			}
 		}
 	}
