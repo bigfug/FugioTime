@@ -13,7 +13,7 @@ using namespace fugio;
 TimeSync::TimeSync( QObject *pParent )
 	: QObject( pParent ), mSocket( nullptr ), mResponseSocket( nullptr ), mServerTimestamp( 0 ), mClientTimestamp( 0 ),
 	  mPlayheadStartTime( 0 ), mPlayheadStartSet( -1 ),
-	  mRTT( 0 ), mGlobalOffset( 0 ), mUniversalOffset( 0 )
+	  mRTT( 0 ), mGlobalOffset( 0 ), mUniversalOffset( 0 ), mLockedOn( false )
 {
 //	QHostAddress	groupAddress = QHostAddress( "226.0.0.1" );
 
@@ -43,9 +43,9 @@ TimeSync::TimeSync( QObject *pParent )
 
 //	qDebug() << logtime() << "TimeSync port:" << mResponseSocket->localPort();
 
-	mGlobalTimer.start();
+	mGlobalTimer = std::chrono::high_resolution_clock::now();
 
-	qDebug() << "Global Timer Monotonic:" << mGlobalTimer.isMonotonic();
+//	qDebug() << "Global Timer Monotonic:" << mGlobalTimer.isMonotonic();
 
 	updateUniversalTimestamp( QDateTime::currentMSecsSinceEpoch() );
 
@@ -178,7 +178,12 @@ void TimeSync::responseReady()
 			qint64	CurrentTimeStamp = universalTimestamp();
 			qint64	TargetTimeStamp  = TDG.mServerTimestamp + ( mRTT / 2 );
 
-			if( abs( TargetTimeStamp - CurrentTimeStamp ) >= 2000 )
+			if( abs( TargetTimeStamp - CurrentTimeStamp ) < 10 )
+			{
+				mLockedOn = true;
+			}
+
+			if( !mLockedOn )
 			{
 				qInfo() << "RESET" << CurrentTimeStamp << TargetTimeStamp << CurrentTimeStamp - TargetTimeStamp;
 
@@ -186,10 +191,15 @@ void TimeSync::responseReady()
 			}
 			else
 			{
-				qint64		DiffTime   = TargetTimeStamp - CurrentTimeStamp;
-				qint64		AdjustTime = CurrentTimeStamp + ( DiffTime / 2 );
+				qint64		TotalDiffTime = TargetTimeStamp - CurrentTimeStamp;
+				qint64		DiffTime;
 
-				qInfo() << "ADJUST" << CurrentTimeStamp << TargetTimeStamp << DiffTime << AdjustTime;
+				DiffTime = std::min<qint64>( TotalDiffTime,  15 );
+				DiffTime = std::max<qint64>( DiffTime,      -15 );
+
+				qint64		AdjustTime = CurrentTimeStamp + ( DiffTime / 3 );
+
+				qInfo() << "ADJUST" << DiffTime << TotalDiffTime;
 
 				updateUniversalTimestamp( AdjustTime );
 			}

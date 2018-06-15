@@ -4,6 +4,8 @@
 #include <QElapsedTimer>
 #include <QHostAddress>
 
+#include <chrono>
+
 class QHostInfo;
 class QUdpSocket;
 
@@ -18,12 +20,18 @@ public:
 
 	inline qint64 timestamp( void ) const
 	{
-		return( mGlobalTimer.elapsed() );
+		std::chrono::high_resolution_clock::time_point	TP = std::chrono::high_resolution_clock::now();
+		std::chrono::milliseconds						MS = std::chrono::duration_cast<std::chrono::milliseconds>( TP - mGlobalTimer );
+
+		return( MS.count() );
 	}
 
 	qint64 universalTimestamp( void ) const
 	{
-		return( mUniversalTimer.elapsed() + mUniversalOffset );
+		std::chrono::high_resolution_clock::time_point	TP = std::chrono::high_resolution_clock::now();
+		std::chrono::milliseconds						MS = std::chrono::duration_cast<std::chrono::milliseconds>( TP - mUniversalTimer );
+
+		return( MS.count() + mUniversalOffset );
 	}
 
 	qint64 universalToGlobal( qint64 pTimeStamp ) const
@@ -44,11 +52,11 @@ public:
 public slots:
 	void updateUniversalTimestamp( qint64 pTimeStamp )
 	{
-		mUniversalTimer.restart();
+		mUniversalTimer = std::chrono::high_resolution_clock::now();
 
 		mUniversalOffset = pTimeStamp;
 
-		mGlobalOffset = mGlobalTimer.elapsed();
+		mGlobalOffset = timestamp();
 	}
 
 	void setTimeServer( const QString &pServer, int pPort = 45456 );
@@ -78,11 +86,12 @@ private:
 	QHostAddress	 mServerAddress;
 	quint16			 mServerPort;
 	int				 mServerLookupPort;
+	bool			 mLockedOn;
 
-	QElapsedTimer					 mGlobalTimer;
-	qint64							 mGlobalOffset;		// convert from universal to global
-	QElapsedTimer					 mUniversalTimer;
-	qint64							 mUniversalOffset;
+	std::chrono::high_resolution_clock::time_point			 mGlobalTimer;
+	qint64													 mGlobalOffset;		// convert from universal to global
+	std::chrono::high_resolution_clock::time_point			 mUniversalTimer;
+	qint64													 mUniversalOffset;
 };
 
 } // namespace fugio
