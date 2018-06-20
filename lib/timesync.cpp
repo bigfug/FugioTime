@@ -204,19 +204,19 @@ void TimeSync::responseReady()
 
 			if( !mLockedOn )
 			{
-				qInfo() << "RESET" << CurrentTimeStamp << TargetTimeStamp << TotalDiffTime;
+				qDebug() << "RESET" << CurrentTimeStamp << TargetTimeStamp << TotalDiffTime;
 
 				updateUniversalTimestamp( TargetTimeStamp );
 			}
 			else if( abs( TotalDiffTime ) < 3 )
 			{
-				qInfo() << "ADJUST" << TotalDiffTime;
+				qDebug() << "ADJUST" << TotalDiffTime;
 
 				updateUniversalTimestamp( CurrentTimeStamp + TotalDiffTime );
 			}
 			else
 			{
-				qInfo() << "IGNORE" << TotalDiffTime;
+				qDebug() << "IGNORE" << TotalDiffTime;
 			}
 		}
 	}

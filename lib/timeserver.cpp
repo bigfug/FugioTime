@@ -24,7 +24,7 @@ TimeServer::TimeServer( QObject *pParent )
 	}
 	else
 	{
-		 qWarning() << logtime() << "Couldn't bind socket";
+		qWarning() << logtime() << "Couldn't bind socket";
 	}
 
 #if defined( TIME_SERVER_MESSAGES )
