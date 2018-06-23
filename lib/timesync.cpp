@@ -13,7 +13,7 @@ using namespace fugio;
 TimeSync::TimeSync( QObject *pParent )
 	: QObject( pParent ), mSocket( nullptr ), mResponseSocket( nullptr ), mServerTimestamp( 0 ), mClientTimestamp( 0 ),
 	  mPlayheadStartTime( 0 ), mPlayheadStartSet( -1 ),
-	  mRTT( 0 ), mGlobalOffset( 0 ), mUniversalOffset( 0 ), mLockedOn( false )
+	  mRTT( 0 ), mSmallestRTT( -1 ), mGlobalOffset( 0 ), mUniversalOffset( 0 )
 {
 //	QHostAddress	groupAddress = QHostAddress( "226.0.0.1" );
 
@@ -175,48 +175,11 @@ void TimeSync::responseReady()
 		{
 			mRTT = timestamp() - TDG.mClientTimestamp;
 
-			qint64	CurrentTimeStamp = universalTimestamp();
 			qint64	TargetTimeStamp  = TDG.mServerTimestamp + ( mRTT / 2 );
 
-			qint64	TotalDiffTime = TargetTimeStamp - CurrentTimeStamp;
-
-			mDiffs << TotalDiffTime;
-
-			while( mDiffs.size() > 9 )
+			if( mSmallestRTT < 0 || mRTT <= mSmallestRTT )
 			{
-				mDiffs.removeFirst();
-			}
-
-			QVector<qint64>		SortedDiffs = mDiffs;
-
-			std::sort( SortedDiffs.begin(), SortedDiffs.end() );
-
-			qint64	MidDif = SortedDiffs.at( SortedDiffs.size() / 2 );
-
-			if( abs( MidDif ) < 10 )
-			{
-				mLockedOn = true;
-			}
-			else if( abs( MidDif ) > 500 )
-			{
-				mLockedOn = false;
-			}
-
-			if( !mLockedOn )
-			{
-				qDebug() << "RESET" << CurrentTimeStamp << TargetTimeStamp << TotalDiffTime;
-
 				updateUniversalTimestamp( TargetTimeStamp );
-			}
-			else if( abs( TotalDiffTime ) < 3 )
-			{
-				qDebug() << "ADJUST" << TotalDiffTime;
-
-				updateUniversalTimestamp( CurrentTimeStamp + TotalDiffTime );
-			}
-			else
-			{
-				qDebug() << "IGNORE" << TotalDiffTime;
 			}
 		}
 	}

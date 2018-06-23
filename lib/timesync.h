@@ -86,9 +86,7 @@ private:
 	QHostAddress	 mServerAddress;
 	quint16			 mServerPort;
 	int				 mServerLookupPort;
-	bool			 mLockedOn;
-
-	QVector<qint64>	 mDiffs;
+	int				 mSmallestRTT;
 
 	std::chrono::high_resolution_clock::time_point			 mGlobalTimer;
 	qint64													 mGlobalOffset;		// convert from universal to global
