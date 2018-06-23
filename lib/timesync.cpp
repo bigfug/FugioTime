@@ -175,11 +175,19 @@ void TimeSync::responseReady()
 		{
 			mRTT = timestamp() - TDG.mClientTimestamp;
 
+			qint64	CurrentTimeStamp = universalTimestamp();
 			qint64	TargetTimeStamp  = TDG.mServerTimestamp + ( mRTT / 2 );
+
+			if( abs( CurrentTimeStamp - TargetTimeStamp ) > 100 )
+			{
+				mSmallestRTT = -1;
+			}
 
 			if( mSmallestRTT < 0 || mRTT <= mSmallestRTT )
 			{
 				updateUniversalTimestamp( TargetTimeStamp );
+
+				mSmallestRTT = mRTT;
 			}
 		}
 	}
