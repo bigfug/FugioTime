@@ -35,7 +35,7 @@ TimeServer::TimeServer( QObject *pParent )
 
 	connect( ClientTimeoutTimer, &QTimer::timeout, this, &TimeServer::clientTimeout );
 
-	ClientTimeoutTimer->start( 60000 );
+	ClientTimeoutTimer->start( 15000 );
 }
 
 void TimeServer::socketError( QAbstractSocket::SocketError pError )
@@ -160,12 +160,14 @@ void TimeServer::clientTimeout()
 {
 	qint64		TimeStamp = timestamp();
 
-	for( int i = mClientInfo.size() - 1 ; i >= 0 ; i-- )
+	for( int i = 0 ; i < mClientInfo.size() ; )
 	{
-		const ClientInfo &CI = mClientInfo[ i ];
+		ClientInfo	CI = mClientInfo[ i ];
 
 		if( TimeStamp - CI.mLastSeen < 120 * 1000 )
 		{
+			i++;
+
 			continue;
 		}
 
@@ -173,6 +175,6 @@ void TimeServer::clientTimeout()
 		qInfo() << logtime() << "TimeServer: Removing client" << CI.mAddress << CI.mPort;
 #endif
 
-		mClientInfo.removeLast();
+		mClientInfo.removeAt( i );
 	}
 }
