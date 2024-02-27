@@ -7,6 +7,7 @@
 #include <QHostAddress>
 #include <QElapsedTimer>
 #include <QNetworkAccessManager>
+#include <QNetworkInformation>
 #include <QListWidgetItem>
 #include <QHostInfo>
 #include <QLabel>
@@ -34,7 +35,7 @@ private slots:
 
 //	void responseReady( void );
 
-	void networkAccessibility( QNetworkAccessManager::NetworkAccessibility pNA );
+	void networkAccessibility( QNetworkInformation::Reachability pNA );
 
 	void hostLookup( const QHostInfo &pHost );
 

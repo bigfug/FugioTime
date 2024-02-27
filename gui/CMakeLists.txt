@@ -11,8 +11,6 @@ set( CMAKE_AUTOMOC ON )
 set( CMAKE_AUTOUIC ON )
 set( CMAKE_AUTORCC ON )
 
-set( CMAKE_AUTOMOC_RELAXED_MODE ON )
-
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
 
 SET( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
@@ -27,7 +25,11 @@ set( CMAKE_CXX_EXTENSIONS OFF )
 
 #------------------------------------------------------------------------------
 
-find_package( Qt5 REQUIRED COMPONENTS Core Gui Network Widgets )
+find_package( Qt6 REQUIRED COMPONENTS Core Gui Network Widgets )
+
+if(NOT Qt6_FOUND)
+	find_package(Qt5 5.15 REQUIRED COMPONENTS Core Gui Network Widgets)
+endif()
 
 #------------------------------------------------------------------------------
 
@@ -85,7 +87,7 @@ if( APPLE )
 endif( APPLE )
 
 #------------------------------------------------------------------------------
-# Qt5
+# Qt
 
-target_link_libraries( FugioTime Qt5::Core Qt5::Gui Qt5::Network Qt5::Widgets )
+target_link_libraries( FugioTime Qt::Core Qt::Gui Qt::Network Qt::Widgets )
 

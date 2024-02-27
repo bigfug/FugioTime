@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->mStatusBar->addPermanentWidget( mNetworkStatusLabel );
 
-	connect( &mNAM, &QNetworkAccessManager::networkAccessibleChanged, this, &MainWindow::networkAccessibility );
+	connect( QNetworkInformation::instance(), &QNetworkInformation::reachabilityChanged, this, &MainWindow::networkAccessibility );
 
 	connect( &mTimeServer, &TimeServer::clientResponse, this, &MainWindow::clientUpdate );
 
@@ -35,7 +35,7 @@ void MainWindow::sendTime()
 {
 	qint64				TS = mTimeServer.timestamp();
 
-	if( mNAM.networkAccessible() != QNetworkAccessManager::Accessible )
+	if( QNetworkInformation::instance()->reachability() == QNetworkInformation::Reachability::Disconnected )
 	{
 		QPalette Palette;
 
@@ -45,6 +45,17 @@ void MainWindow::sendTime()
 		mNetworkStatusLabel->setPalette( Palette );
 		mNetworkStatusLabel->setAutoFillBackground( true );
 		mNetworkStatusLabel->setText( "No Network" );
+	}
+	else if( QNetworkInformation::instance()->reachability() == QNetworkInformation::Reachability::Local )
+	{
+		QPalette Palette;
+
+		Palette.setColor( QPalette::Window,     Qt::blue );
+		Palette.setColor( QPalette::WindowText, Qt::white );
+
+		mNetworkStatusLabel->setPalette( Palette );
+		mNetworkStatusLabel->setAutoFillBackground( true );
+		mNetworkStatusLabel->setText( "Local Network" );
 	}
 	else if( ui->mButton->isChecked() )
 	{
@@ -113,7 +124,7 @@ void MainWindow::sendTime()
 	QTimer::singleShot( qMax( 500LL, 1000LL - ( t % 1000LL ) ), this, SLOT(sendTime()) );
 }
 
-void MainWindow::networkAccessibility( QNetworkAccessManager::NetworkAccessibility pNA )
+void MainWindow::networkAccessibility( QNetworkInformation::Reachability pNA )
 {
 	qDebug() << logtime() << "networkAccessibility" << pNA;
 }

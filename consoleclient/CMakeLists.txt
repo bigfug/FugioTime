@@ -12,7 +12,11 @@ set( CMAKE_CXX_EXTENSIONS OFF )
 
 #------------------------------------------------------------------------------
 
-find_package( Qt5 REQUIRED COMPONENTS Core Network )
+find_package( Qt6 REQUIRED COMPONENTS Core Network )
+
+if(NOT Qt6_FOUND)
+	find_package(Qt5 5.15 REQUIRED COMPONENTS Core Network)
+endif()
 
 #------------------------------------------------------------------------------
 
@@ -55,5 +59,5 @@ endif( APPLE )
 #------------------------------------------------------------------------------
 # Qt5
 
-target_link_libraries( ${PROJECT_NAME} Qt5::Core Qt5::Network )
+target_link_libraries( ${PROJECT_NAME} Qt::Core Qt::Network )
 
