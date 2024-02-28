@@ -23,7 +23,7 @@ TimeSync::TimeSync( QObject *pParent )
 	{
 //		mSocket->joinMulticastGroup( groupAddress );
 
-		connect( mSocket, SIGNAL(readyRead()), this, SLOT(processPendingDatagrams()) );
+		connect( mSocket, &QIODevice::readyRead, this, &TimeSync::processPendingDatagrams );
 	}
 	else
 	{
@@ -34,7 +34,7 @@ TimeSync::TimeSync( QObject *pParent )
 
 	if( mResponseSocket->bind() )
 	{
-		connect( mResponseSocket, SIGNAL(readyRead()), this, SLOT(responseReady()) );
+		connect( mResponseSocket, &QIODevice::readyRead, this, &TimeSync::responseReady );
 	}
 	else
 	{
